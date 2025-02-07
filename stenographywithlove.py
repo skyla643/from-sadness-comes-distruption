@@ -23,8 +23,8 @@ def encode_message(image_path, message, output_prefix):
         modified_pixels = flat_pixels.copy()
         
         for i, bit in enumerate(binary_message):
-            new_value = (modified_pixels[i] & ~1) | int(bit)
-            modified_pixels[i] = max(0, min(255, new_value))  # Ensure value stays in uint8 range
+            new_value = (int(modified_pixels[i]) & ~1) | int(bit)  # Ensure correct uint8 handling
+            modified_pixels[i] = np.clip(new_value, 0, 255)  # Prevent overflow
         
         encoded_img_array = modified_pixels.reshape(img_array.shape)
         encoded_image = Image.fromarray(encoded_img_array.astype(np.uint8))
@@ -43,7 +43,7 @@ def decode_message(image_paths):
         
         binary_message = ""
         for pixel in flat_pixels:
-            binary_message += str(pixel & 1)
+            binary_message += str(int(pixel) & 1)
         
         chars = [binary_message[i:i+8] for i in range(0, len(binary_message), 8)]
         message_chunk = "".join([chr(int(char, 2)) for char in chars])
