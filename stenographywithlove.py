@@ -15,7 +15,7 @@ def encode_message(image_path, message, output_prefix):
     message_chunks = split_message(message, chunk_size)
     
     for index, chunk in enumerate(message_chunks):
-        binary_message = ''.join(format(ord(char), '08b') for char in chunk) + '1111111111111110'
+        binary_message = ''.join(format(ord(char), '08b') for char in chunk) + '1111111111111110'  # End delimiter
         
         if len(binary_message) > len(flat_pixels):
             raise ValueError("Message chunk is too long to encode in this image.")
@@ -46,8 +46,12 @@ def decode_message(image_paths):
             binary_message += str(int(pixel) & 1)
         
         chars = [binary_message[i:i+8] for i in range(0, len(binary_message), 8)]
-        message_chunk = "".join([chr(int(char, 2)) for char in chars])
-        message_chunk = message_chunk.split("\ufffe")[0]
+        
+        message_chunk = ""
+        for char in chars:
+            if char == '1111111111111110':  # Stop at delimiter
+                break
+            message_chunk += chr(int(char, 2))
         
         full_message += message_chunk
     
