@@ -8,10 +8,10 @@ def split_message(message, chunk_size):
 # Function to encode a message into an image
 def encode_message(image_path, message, output_prefix):
     image = Image.open(image_path)
-    img_array = np.array(image, dtype=np.uint8)  # Ensure proper uint8 handling
+    img_array = np.array(image, dtype=np.uint8)
     flat_pixels = img_array.flatten()
     
-    chunk_size = len(flat_pixels) // 8  # Estimate chunk size based on available space
+    chunk_size = len(flat_pixels) // 8
     message_chunks = split_message(message, chunk_size)
     
     for index, chunk in enumerate(message_chunks):
@@ -23,8 +23,8 @@ def encode_message(image_path, message, output_prefix):
         modified_pixels = flat_pixels.copy()
         
         for i, bit in enumerate(binary_message):
-            new_value = (int(modified_pixels[i]) & ~1) | int(bit)  # Ensure correct uint8 handling
-            modified_pixels[i] = np.clip(new_value, 0, 255)  # Prevent overflow
+            new_value = (int(modified_pixels[i]) & ~1) | int(bit)
+            modified_pixels[i] = np.clip(new_value, 0, 255)
         
         encoded_img_array = modified_pixels.reshape(img_array.shape)
         encoded_image = Image.fromarray(encoded_img_array.astype(np.uint8))
@@ -41,17 +41,16 @@ def decode_message(image_paths):
         img_array = np.array(image, dtype=np.uint8)
         flat_pixels = img_array.flatten()
         
-        binary_message = ""
-        for pixel in flat_pixels:
-            binary_message += str(int(pixel) & 1)
+        binary_message = "".join(str(int(pixel) & 1) for pixel in flat_pixels)
         
+        # Find the delimiter and extract valid message bits
+        delimiter_index = binary_message.find('1111111111111110')
+        if delimiter_index != -1:
+            binary_message = binary_message[:delimiter_index]
+        
+        # Convert binary to characters
         chars = [binary_message[i:i+8] for i in range(0, len(binary_message), 8)]
-        
-        message_chunk = ""
-        for char in chars:
-            if char == '1111111111111110':  # Stop at delimiter
-                break
-            message_chunk += chr(int(char, 2))
+        message_chunk = "".join([chr(int(char, 2)) for char in chars if len(char) == 8])
         
         full_message += message_chunk
     
